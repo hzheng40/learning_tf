@@ -1,0 +1,97 @@
+#include <ros/ros.h>
+#include <tf/transform_listener.h>
+#include <turtlesim/Velocity.h>
+#include <turtlesim/Spawn.h>
+#include <ros/console.h>
+#include <stdio.h>
+
+int main(int argc, char** argv){
+  ROS_DEBUG("hello %s","World");
+  ROS_DEBUG_STREAM("Hello " << "World");
+  ros::init(argc, argv, "my_tf_listener");
+
+  ros::NodeHandle node;
+  
+  // This part create a second turtle using spawn function
+  // It's called turtle2
+  /*
+  ros::service::waitForService("spawn");
+  ros::ServiceClient add_turtle =
+       node.serviceClient<turtlesim::Spawn>("spawn");
+  turtlesim::Spawn srv;
+  add_turtle.call(srv);
+  */
+
+  // turtle_vel is the publisher for turtle2's velocity
+  ros::Publisher turtle_vel =
+       node.advertise<turtlesim::Velocity>("turtle1/command_velocity", 10);
+
+  // This creates a TransformListener
+  tf::TransformListener listener;
+  
+  ros::Rate rate(10.0);
+  
+  // length is a varible that record the distance between 
+  // a person's head to torso. 
+  double length = 0.0;
+  
+  // The max speed for turtlebot	
+  const double MAX_LINEAR_SPEED = 1.5;
+  const double MAX_ANGULAR_SPEED = 1.5;
+	
+  // This part looks for the tf 
+  while (node.ok()){
+    tf::StampedTransform transform;
+    try{
+    //ros::Time now = ros::Time::now();
+    //listener.waitForTransform("torso_1", "head_1", now, ros::Duration(10.0));
+    //listener.lookupTransform("torso_1", "head_1", now, transform);
+    listener.lookupTransform("torso_1", "right_hand_1", ros::Time(0), transform);
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+    }
+    
+    //length = transform.getOrigin().y();
+    //ROS_FATAL_THROTTLE(1,"Origin in y: %f",length);
+    //ROS_FATAL_THROTTLE(1,"Origin in x: %f",transform.getOrigin().x());
+    //ROS_FATAL_THROTTLE(1,"Origin in z: %f",transform.getOrigin().z()); 
+    ROS_FATAL_THROTTLE(1,"rotation in x: %f",transform.getRotation().x());
+    ROS_FATAL_THROTTLE(1,"rotation in y: %f",transform.getRotation().y());
+    ROS_FATAL_THROTTLE(1,"rotation in z: %f",transform.getRotation().z());
+/*
+    // This creates a velocity object and set its values
+    turtlesim::Velocity vel_msg;
+    vel_msg.angular = 0;
+    vel_msg.linear = 0;
+    
+    double x = (transform.getRotation().x() - 0.001);
+    if (x > 0) {
+	ROS_FATAL_THROTTLE(1,"Rotation in x: %f", x);
+        vel_msg.linear = (150 * x) / length * MAX_LINEAR_SPEED;
+	//vel_msg.linear = (transform.getRotation().x() - 0.005) * 70;
+    }
+    
+    if (transform.getRotation().z() > 0.005) {
+	    ROS_FATAL_THROTTLE(1,"Rotation in z: %f",transform.getRotation().z());
+	vel_msg.angular = (17.32 * transform.getRotation().z()) / length * MAX_ANGULAR_SPEED;
+	//vel_msg.angular = (transform.getRotation().z() - 0.005) * 70; // about between 0.005 to 0.025
+    } else if (transform.getRotation().z() < -0.005) {
+    ROS_FATAL_THROTTLE(1,"Rotation in z: %f",transform.getRotation().z());
+	vel_msg.angular = (17.32 * transform.getRotation().z()) / length * MAX_ANGULAR_SPEED;
+    	//vel_msg.angular = (transform.getRotation().z() + 0.005) * 70;
+    }
+     
+    // Print transform for debug
+    //ROS_FATAL_THROTTLE(1,"Rotation in x: %f",transform.getOrigin().x());
+    //ROS_FATAL_THROTTLE(1,"Rotation in y: %f",transform.getOrigin().y());
+    //ROS_FATAL_THROTTLE(1,"Rotation in z: %f",transform.getOrigin().z());
+
+
+    // Publish the velocity object to the turtle2's velocity
+    turtle_vel.publish(vel_msg);
+*/
+    rate.sleep();
+  }
+  return 0;
+};
